@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>날씨알림봇 — 관리 대시보드 (Dark)</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --panel-2: #f0f1f4;
+    --border: #e3e5ea;
+    --text: #1c1e26;
+    --text-dim: #7a7f8c;
+    --accent: #6a5af9;
+    --accent-soft: #ece9fe;
+    --green: #1ea568;
+    --green-soft: #e6f7ee;
+    --red: #e0394f;
+    --red-soft: #fdeaec;
+    --yellow: #d99a00;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* 상단 네비게이션 */
+  nav {
+    display: flex; align-items: center; gap: 28px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+  }
+  nav .logo { font-weight: 700; font-size: 15px; display:flex; align-items:center; gap:6px; }
+  nav .tabs { display: flex; gap: 6px; margin-left: 20px; }
+  nav .tab {
+    padding: 7px 16px; border-radius: 8px; font-size: 13px; color: var(--text-dim);
+    cursor: pointer; user-select: none;
+  }
+  nav .tab.active { background: var(--accent); color: white; }
+
+  .container { padding: 28px; max-width: 1200px; margin: 0 auto; }
+  .header-row { margin-bottom: 22px; }
+  .header-row h1 { font-size: 22px; }
+  .header-row p { color: var(--text-dim); font-size: 13px; margin-top: 4px; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .grid2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h3 { font-size: 13px; color: var(--text-dim); font-weight: 500; margin-bottom: 6px; }
+  .card .big { font-size: 24px; font-weight: 700; }
+  .card .sub { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .status-banner {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--green-soft); border: 1px solid #1f4d33;
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+  }
+  .status-banner .left { display: flex; align-items: center; gap: 10px; }
+  .status-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); }
+  .status-banner .title { font-size: 14px; font-weight: 600; color: var(--green); }
+  .status-banner .meta { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .btn {
+    background: var(--accent); color: white; border: none;
+    padding: 9px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+  }
+  .btn.outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+
+  .flow {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 18px 0; padding: 0 8px;
+  }
+  .flow .step { text-align: center; flex: 1; }
+  .flow .circle {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent);
+    color: white; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 6px; font-size: 13px;
+  }
+  .flow .label { font-size: 11px; color: var(--text-dim); }
+  .flow .line { flex: 1; height: 1px; background: var(--border); margin-top: -20px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--text-dim); font-weight: 500; padding: 10px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 12px 8px; border-bottom: 1px solid var(--border); }
+  .tag { padding: 3px 10px; border-radius: 10px; font-size: 11px; }
+  .tag.success { background: var(--green-soft); color: var(--green); }
+  .tag.fail { background: var(--red-soft); color: var(--red); }
+
+  .weather-hero { display: flex; justify-content: space-between; align-items: center; }
+  .weather-hero .temp { font-size: 48px; font-weight: 700; }
+  .weather-hero .icon { font-size: 56px; }
+  .week-row { display: flex; justify-content: space-between; margin-top: 16px; }
+  .week-item { text-align: center; flex: 1; padding: 10px 4px; border-radius: 8px; }
+  .week-item.today { background: var(--accent-soft); }
+  .week-item .day { font-size: 12px; color: var(--text-dim); margin-bottom: 6px; }
+  .week-item .icon { font-size: 20px; }
+  .week-item .t { font-size: 12px; margin-top: 6px; }
+  .week-item .rain { font-size: 10px; color: #6ea8fe; margin-top: 2px; }
+
+  .setting-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-row .label { font-size: 13px; color: var(--text-dim); }
+  .input-like {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; font-size: 13px; color: var(--text); min-width: 140px; text-align: right;
+  }
+  .toggle {
+    width: 36px; height: 20px; border-radius: 10px; background: var(--accent);
+    position: relative; cursor: pointer;
+  }
+  .toggle::after {
+    content: ""; width: 16px; height: 16px; border-radius: 50%; background: white;
+    position: absolute; top: 2px; right: 2px;
+  }
+
+  .stat-row { display: flex; justify-content: space-between; padding: 10px 0; font-size: 13px; }
+  .stat-row .v { font-weight: 600; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">⛅ WeatherBot</div>
+  <div class="tabs">
+    <div class="tab active" data-target="dashboard">대시보드</div>
+    <div class="tab" data-target="briefing">날씨 브리핑</div>
+    <div class="tab" data-target="settings">설정</div>
+    <div class="tab" data-target="history">이력</div>
+  </div>
+</nav>
+
+<!-- 1. 대시보드 -->
+<div class="page active" id="dashboard">
+  <div class="container">
+    <div class="header-row">
+      <h1>대시보드</h1>
+      <p>/ — 봇 상태 · 다음 알림 · 실행 로그</p>
+    </div>
+
+    <div class="status-banner">
+      <div class="left">
+        <span class="dot"></span>
+        <div>
+          <div class="title">오늘 알림 발송 완료</div>
+          <div class="meta">07:30 발송 · 서울특별시 · 정상 수신 확인</div>
+        </div>
+      </div>
+      <button class="btn">브리핑 보기 →</button>
+    </div>
+
+    <div class="grid3">
+      <div class="card">
+        <h3>다음 자동 실행</h3>
+        <div class="big">오전 7:30</div>
+        <div class="sub">내일 07:30 예정</div>
+      </div>
+      <div class="card">
+        <h3>최근 실행</h3>
+        <div class="big">06-29 07:30</div>
+        <div class="sub"><span style="color:var(--green)">성공</span> · 서울특별시</div>
+      </div>
+      <div class="card">
+        <h3>봇 상태</h3>
+        <div class="big" style="color:var(--green)">● 정상 작동 중</div>
+        <div class="sub">텔레그램 연결 OK</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:14px;">수동 실행 흐름</h3>
+      <p class="sub" style="margin-bottom:10px;">스케줄러 → API 호출 → 데이터 가공 → 텔레그램 전송 순으로 실행됩니다.</p>
+      <div class="flow">
+        <div class="step"><div class="circle">✓</div><div class="label">스케줄러</div></div>
+        <div class="step"><div class="circle">✓</div><div class="label">API 호출</div></div>
+        <div class="step"><div class="circle">✓</div><div class="label">데이터 가공</div></div>
+        <div class="step"><div class="circle">✓</div><div class="label">텔레그램 전송</div></div>
+        <div class="step"><div class="circle">✓</div><div class="label">완료</div></div>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn">▶ 지금 실행</button>
+        <button class="btn outline">📨 테스트 알림 즉시 발송</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 날씨 브리핑 -->
+<div class="page" id="briefing">
+  <div class="container">
+    <div class="header-row">
+      <h1>오늘의 날씨 브리핑</h1>
+      <p>/briefing — 현재 날씨 · 주간 요약 · 옷차림 추천</p>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="weather-hero">
+        <div>
+          <div class="temp" id="b-temp">--°C</div>
+          <div class="sub" id="b-desc">불러오는 중...</div>
+        </div>
+        <div class="icon" id="b-icon">⏳</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h3 style="margin-bottom:10px;">주간 날씨</h3>
+      <div class="week-row" id="b-week">
+        <div class="sub">불러오는 중...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:8px;">오늘의 옷차림 추천</h3>
+      <p style="font-size:14px;" id="b-outfit">불러오는 중...</p>
+    </div>
+
+    <p class="sub" id="b-updated" style="margin-top:10px;"></p>
+  </div>
+</div>
+
+<!-- 3. 설정 -->
+<div class="page" id="settings">
+  <div class="container">
+    <div class="header-row">
+      <h1>설정</h1>
+      <p>/settings — 알림 시간 · 지역 · 옵션 관리</p>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:6px; font-size:14px; color:var(--text);">기본 설정</h3>
+      <div class="setting-row">
+        <span class="label">자동 알림 시간</span>
+        <span class="input-like">오전 07:30</span>
+      </div>
+      <div class="setting-row">
+        <span class="label">조회 지역</span>
+        <span class="input-like">서울특별시</span>
+      </div>
+      <div class="setting-row">
+        <span class="label">주간 날씨 포함</span>
+        <div class="toggle"></div>
+      </div>
+      <div class="setting-row">
+        <span class="label">옷차림 추천 포함</span>
+        <div class="toggle"></div>
+      </div>
+      <div class="setting-row">
+        <span class="label">텔레그램 채팅방 ID</span>
+        <span class="input-like">7644758195</span>
+      </div>
+      <button class="btn" style="margin-top:16px;">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 이력 -->
+<div class="page" id="history">
+  <div class="container">
+    <div class="header-row">
+      <h1>알림 발송 이력</h1>
+      <p>/history — 최근 발송 기록 · 명령어 사용 통계</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-bottom:10px; color:var(--text); font-size:14px;">최근 발송 이력</h3>
+        <table>
+          <thead><tr><th>일시</th><th>유형</th><th>지역</th><th>날씨</th><th>기온</th></tr></thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="5" style="text-align:center; color:var(--text-dim); padding:20px;">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:6px; color:var(--text); font-size:14px;">명령어 사용 통계 (전체)</h3>
+        <div class="stat-row"><span>/weather 조회</span><span class="v" id="stat-weather">-</span></div>
+        <div class="stat-row"><span>자동 알림</span><span class="v" id="stat-auto">-</span></div>
+        <div class="stat-row"><span>대시보드 조회</span><span class="v" id="stat-dashboard">-</span></div>
+        <div class="stat-row"><span>전체</span><span class="v" id="stat-total">-</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => showPage(tab.dataset.target, tab));
+});
+
+const API_BASE = "http://127.0.0.1:8500";
+
+async function loadWeather() {
+  try {
+    const res = await fetch(`${API_BASE}/api/weather`);
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "조회 실패");
+
+    document.getElementById("b-temp").textContent = `${data.temp_now}°C`;
+    document.getElementById("b-desc").textContent =
+      `${data.desc} · 최고 ${data.temp_max}°C / 최저 ${data.temp_min}°C · 강수확률 ${data.precip}%`;
+    document.getElementById("b-icon").textContent = data.icon;
+    document.getElementById("b-outfit").textContent = `${data.outfit} — 최고기온 ${data.temp_max}°C 기준`;
+    document.getElementById("b-updated").textContent = `마지막 업데이트: ${data.updated_at} (실시간 Open-Meteo API)`;
+
+    const weekEl = document.getElementById("b-week");
+    weekEl.innerHTML = "";
+    data.weekly.forEach((w, i) => {
+      const rainHtml = w.rain >= 30 ? `<div class="rain">☔${w.rain}%</div>` : "";
+      weekEl.innerHTML += `
+        <div class="week-item ${i === 0 ? 'today' : ''}">
+          <div class="day">${w.day}${i === 0 ? '(오늘)' : ''}</div>
+          <div class="icon">${w.icon}</div>
+          <div class="t">${w.max}°/${w.min}°</div>
+          ${rainHtml}
+        </div>`;
+    });
+  } catch (e) {
+    document.getElementById("b-desc").textContent =
+      "⚠️ 날씨 서버에 연결할 수 없습니다. dashboard_server.py가 실행 중인지 확인하세요.";
+  }
+}
+
+loadWeather();
+
+async function loadHistory() {
+  try {
+    const res = await fetch(`${API_BASE}/api/history?limit=20`);
+    const data = await res.json();
+    const tbody = document.getElementById("history-tbody");
+
+    if (!data.ok || data.history.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-dim); padding:20px;">아직 기록이 없습니다. 봇을 실행하면 자동으로 저장됩니다.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.history.map(r => `
+      <tr>
+        <td>${r.recorded_at}</td>
+        <td>${r.type}</td>
+        <td>${r.city}</td>
+        <td>${r.desc}</td>
+        <td>${r.temp_now}°C (↑${r.temp_max}° ↓${r.temp_min}°)</td>
+      </tr>
+    `).join("");
+
+    // 통계 계산
+    const counts = { "/weather 조회": 0, "자동 알림": 0, "대시보드 조회": 0 };
+    data.history.forEach(r => { if (counts[r.type] !== undefined) counts[r.type]++; });
+    document.getElementById("stat-weather").textContent    = counts["/weather 조회"] + "회";
+    document.getElementById("stat-auto").textContent       = counts["자동 알림"] + "회";
+    document.getElementById("stat-dashboard").textContent  = counts["대시보드 조회"] + "회";
+    document.getElementById("stat-total").textContent      = data.history.length + "회";
+  } catch (e) {
+    document.getElementById("history-tbody").innerHTML =
+      `<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">서버에 연결할 수 없습니다.</td></tr>`;
+  }
+}
+
+// 이력 탭 클릭 시 자동 새로고침
+document.querySelectorAll('.tab').forEach(tab => {
+  if (tab.dataset.target === 'history') {
+    tab.addEventListener('click', loadHistory);
+  }
+});
+</script>
+
+</body>
+</html>
